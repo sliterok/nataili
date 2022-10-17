@@ -229,6 +229,50 @@ def bridge(interval, api_key, worker_name, horde_url, model_manager, priority_us
         time.sleep(interval)
 
 
+def check_models(models):
+    logger.init("Models", status="Checking")
+    from os.path import exists
+    import sys
+    if exists('./models'):
+        if exists('./models/ldm/stable-diffusion-v1/model.ckpt'):
+            logger.init_ok("Stable Diffusion Model", status="OK")
+        return
+    choice = input(f"You do not appear to have downloaded the models needed yet. \
+            You need at least a main model to proceed. Would you like to download your prespecified models?\n\
+                y: Download {models} (default).\
+                n: Abort and exit\
+                all: Download all models(This can take a significant amount of time and bandwidth)?")
+    try:
+        from creds import hf_username,hf_password
+    except:
+        hf_username = input("Please type your huggingface.co username: ")
+        hf_password = input("Please type your huggingface.co password: ")
+    hf_auth = {"username": creds.hf_username, "password": creds.hf_password}
+    mm = ModelManager(hf_auth=hf_auth)
+    mm.init()
+    if choice in ['all', 'a']:
+        mm.download_all()    
+    elif choice in ['y', 'Y', '', 'yes']:
+        for model in models:
+            logger.init_ok(f"Model: {model}", status="Downloading")
+            self.download_model(model)
+    else:
+        sys.exit(1)
+    logger.init_ok("Stable Diffusion Model", status="OK")
+    if exists('./bridgeData.py'):
+        logger.init_ok("Bridge Config", status="OK")
+    if input("You do not appear to have a bridgeData.py. Would you like to create it from the template now? (y/n)") in ['y', 'Y', '', 'yes']:
+        with open('bridgeData_template.py','r') as firstfile, open('bridgeData.py','a') as secondfile:
+            for line in firstfile:
+                secondfile.write(line)
+        logger.message("bridgeData.py created. Bridge will exit. Please edit bridgeData.py with your setup and restart the bridge")
+        sys.exit(0)
+    
+            
+
+
+
+
 if __name__ == "__main__":
     
     set_logger_verbosity(args.verbosity)
@@ -242,6 +286,7 @@ if __name__ == "__main__":
     priority_usernames = args.priority_usernames if args.priority_usernames else bd.priority_usernames
     max_power = args.max_power if args.max_power else bd.max_power
     model_names = [args.model] if args.model else bd.models_to_load
+    check_models(model_names)
     model_manager = ModelManager()
     model_manager.init()
     for model in model_names:
