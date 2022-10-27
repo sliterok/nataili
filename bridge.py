@@ -24,7 +24,7 @@ from nataili.inference.compvis.img2img import img2img
 from nataili.model_manager import ModelManager
 from nataili.inference.compvis.txt2img import txt2img
 from nataili.util.cache import torch_gc
-from nataili.util import logger,set_logger_verbosity, quiesce_logger, test_logger
+from nataili.util import logger, set_logger_verbosity, quiesce_logger
 from PIL import Image, ImageFont, ImageDraw, ImageFilter, ImageOps, ImageChops, UnidentifiedImageError
 from io import BytesIO
 from base64 import binascii
@@ -165,7 +165,7 @@ def bridge(interval, model_manager, bd):
             req_type = "img2img"
         logger.debug(f"{req_type} ({model}) request with id {current_id} picked up. Initiating work...")
         try:
-            safety_checker = model_manager['safety_checker']['model'] if 'safety_checker' in model_manager.loaded_models else None
+            safety_checker = model_manager.loaded_models['safety_checker']['model'] if 'safety_checker' in model_manager.loaded_models else None
             if source_image:
                 base64_bytes = source_image.encode('utf-8')
                 img_bytes = base64.b64decode(base64_bytes)
@@ -345,6 +345,7 @@ def load_bridge_data():
     if bridge_data.max_power < 2:
         bridge_data.max_power = 2
     bridge_data.max_pixels = 64*64*8*bridge_data.max_power
+    bridge_data.model_names.append('safety_checker')
     return(bridge_data)
 
 if __name__ == "__main__":
@@ -358,17 +359,6 @@ if __name__ == "__main__":
     check_models(bd.model_names)
     model_manager = ModelManager()
     model_manager.init()
-    if args.censor_nsfw or bd.censor_nsfw:
-        model = 'safety_checker'
-        while model not in model_manager.available_models:
-            logger.warning(f"Model {model} is not available. Downloading it.")
-            model_manager.download_model(model)
-        logger.init(f'{model}', status="Loading")
-        success = model_manager.load_model(model)
-        if success:
-            logger.init_ok(f'{model}', status="Loaded")
-        else:
-            logger.init_err(f'{model}', status="Error")
     for model in bd.model_names:
         logger.init(f'{model}', status="Loading")
         success = model_manager.load_model(model)
