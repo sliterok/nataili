@@ -5,7 +5,7 @@ This repository includes a modified version of the nataili stable-diffusion serv
 - ```cd nataili```
 
 ### Huggingface access token
-- Register on Huggingface
+- Register on [Huggingface](https://huggingface.co/)
 - Go here https://huggingface.co/runwayml/stable-diffusion-inpainting
 - Agree to the terms
 - Create a token via Settings/Access Tokens
