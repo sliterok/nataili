@@ -283,7 +283,7 @@ def check_models(models):
                 logger.init(f"Model: {model}", status="Downloading")
                 if not mm.download_model(model):
                     logger.message("Something went wrong when downloading the model and it does not fit the expected checksum. Please check that your HuggingFace authentication is correct and that you've accepted the model license from the browser.")
-                    sys.exit(0)
+                    sys.exit(1)
     logger.init_ok("Models", status="OK")
     if exists('./bridgeData.py'):
         logger.init_ok("Bridge Config", status="OK")
@@ -292,7 +292,7 @@ def check_models(models):
             for line in firstfile:
                 secondfile.write(line)
         logger.message("bridgeData.py created. Bridge will exit. Please edit bridgeData.py with your setup and restart the bridge")
-        sys.exit(0)
+        sys.exit(2)
     
 def load_bridge_data():
     bridge_data = BridgeData()
