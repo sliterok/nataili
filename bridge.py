@@ -165,13 +165,16 @@ def bridge(interval, model_manager, bd):
             req_type = "img2img"
         logger.debug(f"{req_type} ({model}) request with id {current_id} picked up. Initiating work...")
         try:
+            safety_checker = model_manager['safety_checker']['model'] if 'safety_checker' in model_manager.loaded_models else None
             if source_image:
                 base64_bytes = source_image.encode('utf-8')
                 img_bytes = base64.b64decode(base64_bytes)
                 gen_payload['init_img'] = Image.open(BytesIO(img_bytes))
-                generator = img2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations', load_concepts=True, concepts_dir='models/custom/sd-concepts-library')
+                generator = img2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
+                load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor)
             else:
-                generator = txt2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations', load_concepts=True, concepts_dir='models/custom/sd-concepts-library')
+                generator = txt2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
+                load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor)
         except KeyError:
             continue
         # If the received image is unreadable, we continue
@@ -355,6 +358,17 @@ if __name__ == "__main__":
     check_models(bd.model_names)
     model_manager = ModelManager()
     model_manager.init()
+    if args.censor_nsfw or bd.censor_nsfw:
+        model = 'safety_checker'
+        while model not in model_manager.available_models:
+            logger.warning(f"Model {model} is not available. Downloading it.")
+            model_manager.download_model(model)
+        logger.init(f'{model}', status="Loading")
+        success = model_manager.load_model(model)
+        if success:
+            logger.init_ok(f'{model}', status="Loaded")
+        else:
+            logger.init_err(f'{model}', status="Error")
     for model in bd.model_names:
         logger.init(f'{model}', status="Loading")
         success = model_manager.load_model(model)
