@@ -85,7 +85,7 @@
       "files": [
         {
           "path": "models/custom/waifu-diffusion.ckpt",
-          "md5sum": "a2aa170e3f513b32a3fd8841656e0123"
+          "md5sum": "dc688dc907c953532c659374e7ddf1e4"
         },
         {
           "path": "configs/stable-diffusion/v1-inference.yaml"
@@ -95,7 +95,7 @@
         {
           "file_name": "waifu-diffusion.ckpt",
           "file_path": "models/custom",
-          "file_url": "https://huggingface.co/hakurei/waifu-diffusion-v1-3/resolve/main/wd-v1-3-full.ckpt"
+          "file_url": "https://huggingface.co/hakurei/waifu-diffusion-v1-3/resolve/main/wd-v1-3-float32.ckpt"
         }
       ]
     },
@@ -638,5 +638,41 @@
     "hf_path": "runwayml/stable-diffusion-inpainting",
     "hf_auth": true,
     "available": false
+  },
+  "safety_checker": {
+    "name": "safety_checker",
+    "type": "safety_checker",
+    "description": "Safety checker",
+    "config": {
+      "files": [
+        {
+          "path": "models/safety_checker/pytorch_model.bin",
+          "md5sum": "dbbcb50d4df4572a720b104fae1e8187"
+        },
+        {
+          "path": "models/safety_checker/config.json"
+        },
+        {
+          "path": "models/safety_checker/preprocessor_config.json"
+        }
+      ],
+      "download": [
+        {
+          "file_name": "pytorch_model.bin",
+          "file_path": "models/safety_checker",
+          "file_url": "https://huggingface.co/CompVis/stable-diffusion-safety-checker/resolve/main/pytorch_model.bin"
+        },
+        {
+          "file_name": "config.json",
+          "file_path": "models/safety_checker",
+          "file_url": "https://huggingface.co/CompVis/stable-diffusion-safety-checker/resolve/main/config.json"
+        },
+        {
+          "file_name": "preprocessor_config.json",
+          "file_path": "models/safety_checker",
+          "file_url": "https://huggingface.co/CompVis/stable-diffusion-safety-checker/resolve/main/preprocessor_config.json"
+        }
+      ]
+    }
   }
 }

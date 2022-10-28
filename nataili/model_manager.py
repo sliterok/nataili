@@ -17,6 +17,7 @@ from ldm.models.blip import blip_decoder
 from tqdm import tqdm
 import open_clip
 import clip
+from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
 from diffusers import StableDiffusionInpaintPipeline
 
 from nataili.util.cache import torch_gc
@@ -44,6 +45,9 @@ class ModelManager():
                 self.models = json.load(open('./db.json'))
                 self.dependencies = json.load(open('./db_dep.json'))
                 logger.init_warn("Model Reference", status="Local")
+        else:
+            self.models = json.load(open('./db.json'))
+            self.dependencies = json.load(open('./db_dep.json'))
         self.available_models = []
         self.tainted_models = []
         self.available_dependencies = []
@@ -257,8 +261,18 @@ class ModelManager():
         elif self.models[model_name]['type'] == 'diffusers':
             self.loaded_models[model_name] = self.load_diffuser(model_name)
             return True
+        elif self.models[model_name]['type'] == 'safety_checker':
+            self.loaded_models[model_name] = self.load_safety_checker(model_name, gpu_id)
+            return True
         else:
             return False
+
+    def load_safety_checker(self, model_name='', gpu_id=0):
+        model_path = os.path.dirname(self.get_model_files(model_name)[0]['path'])
+        device = torch.device(f"cuda:{gpu_id}")
+        model = StableDiffusionSafetyChecker.from_pretrained(model_path)
+        model = model.eval().to(device)
+        return {'model': model, 'device': device}
 
     def validate_model(self, model_name):
         files = self.get_model_files(model_name)
@@ -367,8 +381,8 @@ class ModelManager():
                 if not self.check_file_available(file_path) or model_name in self.tainted_models:
                     logger.debug(f'Downloading {download_url} to {file_path}')
                     self.download_file(download_url, file_path)
-                    if not self.validate_model(model_name):
-                        return False
+        if not self.validate_model(model_name):
+            return False
         if model_name in self.tainted_models:
             self.tainted_models.remove(model_name)
         self.init()
