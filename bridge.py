@@ -194,12 +194,15 @@ def bridge(interval, model_manager, bd):
                 generator = img2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
                 load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor)
             elif req_type == "inpainting" or req_type == "outpainting":
+                del gen_payload["save_grid"]
+                del gen_payload["sampler_name"]
+                del gen_payload["denoising_strength"]
                 gen_payload['inpaint_img'] = img_source
 
                 if img_mask:
                    gen_payload['inpaint_mask'] = img_mask
 
-                generator = inpainting(model_manager.loaded_models[model]["model"], 'bridge_generations')
+                generator = inpainting(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations')
             else:
                 generator = txt2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
                 load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor)
@@ -397,7 +400,7 @@ if __name__ == "__main__":
     check_models(bd.model_names)
     from creds import hf_username,hf_password
     hf_auth = {"username": hf_username, "password": hf_password}
-    model_manager = ModelManager(hf_auth=hf_auth)
+    model_manager = ModelManager(hf_auth=hf_auth, download=False)
     model_manager.init()
     for model in bd.model_names:
         logger.init(f'{model}', status="Loading")
