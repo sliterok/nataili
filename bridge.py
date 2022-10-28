@@ -199,7 +199,6 @@ def bridge(interval, model_manager, bd):
                    gen_payload['inpaint_mask'] = img_mask
 
                 generator = inpainting("cuda", 'bridge_generations')
-                load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor)
             else:
                 generator = txt2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
                 load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor)
