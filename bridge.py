@@ -12,6 +12,7 @@ arg_parser.add_argument('--blacklist', nargs='+', required=False, help="List the
 arg_parser.add_argument('--censorlist', nargs='+', required=False, help="List the words that you want to censor.")
 arg_parser.add_argument('--censor_nsfw', action='store_true', required=False, help="Set to true if you want this bridge worker to censor NSFW images.")
 arg_parser.add_argument('--allow_img2img', action='store_true', required=False, help="Set to true if you want this bridge worker to allow img2img request.")
+arg_parser.add_argument('--allow_painting', action='store_true', required=False, help="Set to true if you want this bridge worker to allow inpainting/outpainting requests.")
 arg_parser.add_argument('--allow_unsafe_ip', action='store_true', required=False, help="Set to true if you want this bridge worker to allow img2img requests from unsafe IPs.")
 arg_parser.add_argument('-m', '--model', action='store', required=False, help="Which model to run on this horde.")
 arg_parser.add_argument('--debug', action="store_true", default=False, help="Show debugging messages.")
@@ -198,7 +199,7 @@ def bridge(interval, model_manager, bd):
                 if img_mask:
                    gen_payload['inpaint_mask'] = img_mask
 
-                generator = inpainting("cuda", 'bridge_generations')
+                generator = inpainting(model_manager.loaded_models[model]["model"], 'bridge_generations')
             else:
                 generator = txt2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
                 load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor)
@@ -269,7 +270,7 @@ def check_models(models):
     logger.init("Models", status="Checking")
     from os.path import exists
     import sys
-    mm = ModelManager()
+    mm = ModelManager(download=False)
     models_exist = True
     not_found_models = []
     for model in models:
@@ -279,6 +280,7 @@ def check_models(models):
         if not mm.validate_model(model):
             models_exist = False
             not_found_models.append(model)
+    
     if not models_exist:
         choice = input(f"You do not appear to have downloaded the models needed yet.\nYou need at least a main model to proceed. Would you like to download your prespecified models?\n\
         y: Download {not_found_models} (default).\n\
@@ -293,7 +295,9 @@ def check_models(models):
             for m in dl:
                 if m.get('hf_auth', False):
                     needs_hf = True
-        if needs_hf or choice in ['all', 'a']:
+        if choice in ['all', 'a']:
+            needs_hf = True
+        if needs_hf:
             try:
                 from creds import hf_username,hf_password
             except:
@@ -321,6 +325,7 @@ def check_models(models):
         logger.message("bridgeData.py created. Bridge will exit. Please edit bridgeData.py with your setup and restart the bridge")
         sys.exit(2)
     
+@logger.catch(reraise=True)
 def load_bridge_data():
     bridge_data = BridgeData()
     try:
@@ -389,7 +394,9 @@ if __name__ == "__main__":
     bd = load_bridge_data()
     # test_logger()
     check_models(bd.model_names)
-    model_manager = ModelManager()
+    from creds import hf_username,hf_password
+    hf_auth = {"username": hf_username, "password": hf_password}
+    model_manager = ModelManager(hf_auth=hf_auth)
     model_manager.init()
     for model in bd.model_names:
         logger.init(f'{model}', status="Loading")

@@ -17,6 +17,7 @@ from ldm.models.blip import blip_decoder
 from tqdm import tqdm
 import open_clip
 import clip
+from diffusers import StableDiffusionInpaintPipeline
 
 from nataili.util.cache import torch_gc
 from nataili.util import logger
@@ -71,11 +72,14 @@ class ModelManager():
                     raise ValueError('hf_auth must contain username and password')
         return True
 
+    @logger.catch(reraise=True)
     def set_authentication(self, hf_auth=None):
         # We do not let No authentication override previously set auth
         if not hf_auth and self.hf_auth:
             return
         self.hf_auth = hf_auth
+        if hf_auth:
+            os.environ["HUGGING_FACE_HUB_TOKEN"] = hf_auth.get('password')
 
     def get_model(self, model_name):
         return self.models.get(model_name)
@@ -102,6 +106,8 @@ class ModelManager():
         return self.dependencies[dependency_name]
 
     def get_model_files(self, model_name):
+        if self.models[model_name]['type'] == 'diffusers':
+            return []
         return self.models[model_name]['config']['files']
     
     def get_dependency_files(self, dependency_name):
@@ -217,6 +223,16 @@ class ModelManager():
         model = (model if precision=='full' else model.half()).to(device)
         return {'model': model, 'device': device, 'preprocesses': preprocesses}
 
+    def load_diffuser(self, model_name=''):
+        model_path = self.models[model_name]['hf_path']
+        pipe = StableDiffusionInpaintPipeline.from_pretrained(
+           model_path,
+           revision="fp16",
+           torch_dtype=torch.float16,
+           use_auth_token=self.models[model_name]['hf_auth']
+        ).to("cuda")
+        return {'model': pipe, 'device': "cuda"}
+
     def load_model(self, model_name='', precision='half', gpu_id=0):
         if model_name not in self.available_models:
             return False
@@ -237,6 +253,9 @@ class ModelManager():
             return True
         elif self.models[model_name]['type'] == 'clip':
             self.loaded_models[model_name] = self.load_clip(model_name, precision, gpu_id)
+            return True
+        elif self.models[model_name]['type'] == 'diffusers':
+            self.loaded_models[model_name] = self.load_diffuser(model_name)
             return True
         else:
             return False

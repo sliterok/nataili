@@ -15,7 +15,7 @@ from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
 
 class inpainting:
-    def __init__(self, device, output_dir, save_extension='jpg', output_file_path=False, load_concepts=False,
+    def __init__(self, pipe, output_dir, save_extension='jpg', output_file_path=False, load_concepts=False,
       concepts_dir=None, verify_input=True, auto_cast=True):
         self.output_dir = output_dir
         self.output_file_path = output_file_path
@@ -24,21 +24,12 @@ class inpainting:
         self.concepts_dir = concepts_dir
         self.verify_input = verify_input
         self.auto_cast = auto_cast
-        self.device = device
+        self.pipe = pipe
         self.comments = []
         self.output_images = []
         self.info = ''
         self.stats = ''
         self.images = []
-
-        model_path = "runwayml/stable-diffusion-inpainting"
-
-        self.pipe = StableDiffusionInpaintPipeline.from_pretrained(
-           model_path,
-           revision="fp16",
-           torch_dtype=torch.float16,
-           use_auth_token=True
-        ).to(self.device)
 
     def resize_image(self, resize_mode, im, width, height):
         LANCZOS = (PIL.Image.Resampling.LANCZOS if hasattr(PIL.Image, 'Resampling') else PIL.Image.LANCZOS)
