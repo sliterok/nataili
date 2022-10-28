@@ -1,37 +1,29 @@
 import os
 import re
 import sys
-import tqdm
-from contextlib import contextmanager, nullcontext
-import skimage
-import numpy as np
 import PIL
+import PIL.ImageOps
 import torch
-from einops import rearrange
+from contextlib import nullcontext
+from slugify import slugify
+from diffusers import StableDiffusionInpaintPipeline
+
 from nataili.util.cache import torch_gc
 from nataili.util.check_prompt_length import check_prompt_length
 from nataili.util.get_next_sequence_number import get_next_sequence_number
-from nataili.util.image_grid import image_grid
-from nataili.util.load_learned_embed_in_clip import load_learned_embed_in_clip
 from nataili.util.save_sample import save_sample
 from nataili.util.seed_to_int import seed_to_int
-from slugify import slugify
-import PIL
-
-from diffusers import StableDiffusionInpaintPipeline
-import random
-import uuid
 
 class inpainting:
-    def __init__(self, device, output_dir, save_extension='jpg',
-    output_file_path=False, load_concepts=False, concepts_dir=None,
-    verify_input=True, auto_cast=True):
+    def __init__(self, device, output_dir, save_extension='jpg', output_file_path=False, load_concepts=False,
+      concepts_dir=None, verify_input=True, auto_cast=True):
         self.output_dir = output_dir
         self.output_file_path = output_file_path
         self.save_extension = save_extension
         self.load_concepts = load_concepts
         self.concepts_dir = concepts_dir
         self.verify_input = verify_input
+        self.auto_cast = auto_cast
         self.device = device
         self.comments = []
         self.output_images = []
@@ -84,23 +76,29 @@ class inpainting:
 
         return res
 
-    def generate(self, prompt: str, inpaint_img=None, inpaint_mask=None, mask_mode='mask', resize_mode='resize', noise_mode='seed',
-      denoising_strength:float=0.8, ddim_steps=50, sampler_name='k_lms', n_iter=1, batch_size=1, cfg_scale=7.5, seed=None,
-                height=512, width=512, save_individual_images: bool = True, save_grid: bool = True, ddim_eta:float = 0.0):
+    def generate(self, prompt: str, inpaint_img=None, inpaint_mask=None, ddim_steps=50, n_iter=1, batch_size=1,
+      cfg_scale=7.5, seed=None, height=512, width=512, save_individual_images: bool = True):
 
         seed = seed_to_int(seed)
-
-        image_dict = {
-            "seed": seed
-        }
-
         inpaint_img = self.resize_image('resize', inpaint_img, width, height)
-        inpaint_mask = self.resize_image('resize', inpaint_mask, width, height)
+
+        # mask information has been transferred in the Alpha channel of the inpaint image
+        if inpaint_mask is None:
+           red, green, blue, alpha = inpaint_img.split()
+           
+           if alpha is None:
+              raise Exception("inpainting image doesn't have an alpha channel.")              
+           
+           # tbd: generated mask has to be converted into pure black/white. currently only greyscale.
+           #inpaint_mask = alpha.point(lambda x: 255 if x > 0 else 0, mode='1')
+           inpaint_mask = alpha
+           inpaint_mask = PIL.ImageOps.invert(inpaint_mask)
+           #inpaint_mask.save("./inpaint_mask_generated.png", format="PNG")
+        else:
+           inpaint_mask = self.resize_image('resize', inpaint_mask, width, height)
 
         # tbd: is this still needed?
-        #torch_gc()
-
-        # tbd: inpaint mask generation. for now we assume, that the original image and a mask image is passed to the function
+        torch_gc()
 
         if self.load_concepts and self.concepts_dir is not None:
             prompt_tokens = re.findall('<([a-zA-Z0-9-]+)>', prompt)
@@ -121,55 +119,56 @@ class inpainting:
                 print("Error verifying input:", file=sys.stderr)
                 print(traceback.format_exc(), file=sys.stderr)
 
-        # tbd: these lines are currently only executed, if verify_input is True. Bug?
-        all_prompts = batch_size * n_iter * [prompt]
+        all_prompts = batch_size * [prompt]
         all_seeds = [seed + x for x in range(len(all_prompts))]
 
-        #precision_scope = torch.autocast if self.auto_cast else nullcontext
-        #with torch.no_grad(), precision_scope("cuda"):
+        precision_scope = torch.autocast if self.auto_cast else nullcontext
 
-        for n in range(n_iter):
-           print(f"Iteration: {n+1}/{n_iter}")
-           prompts = all_prompts[n * batch_size:(n + 1) * batch_size]
-           seeds = all_seeds[n * batch_size:(n + 1) * batch_size]
+        with torch.no_grad(), precision_scope("cuda"):
+           for n in range(batch_size):
+              print(f"Iteration: {n+1}/{batch_size}")
 
-           if isinstance(prompts, tuple):
-              prompts = list(prompts)
+              prompt = all_prompts[n]
+              seed = all_seeds[n]
+              print("prompt: " + prompt + ", seed: " + str(seed))
 
-           # tbd: which is the right seed?
-           mySeed = random.randint(0, 2**32)
-           generator = torch.Generator(device=self.device).manual_seed(mySeed)
+              generator = torch.Generator(device=self.device).manual_seed(seed)
 
-           x_samples = self.pipe(
-              prompt=prompt,
-              image=inpaint_img,
-              mask_image=inpaint_mask,
-              guidance_scale=cfg_scale,
-              generator=generator,
-              num_images_per_prompt=n_iter
-           ).images
+              x_samples = self.pipe(
+                 prompt=prompt,
+                 image=inpaint_img,
+                 mask_image=inpaint_mask,
+                 guidance_scale=cfg_scale,
+                 num_inference_steps=ddim_steps,
+                 generator=generator,
+                 num_images_per_prompt=n_iter
+              ).images
 
-           for x_sample in x_samples:
-              # tbd: which is the right filename?
-              #sanitized_prompt = slugify(prompts[i])
-              #full_path = os.path.join(os.getcwd(), sample_path)
-              #filename = f"{base_count:05}-{ddim_steps}_{sampler_name}_{seeds[i]}_{sanitized_prompt}"[:200-len(full_path)]
+              for i, x_sample in enumerate(x_samples):
+                 image_dict = {
+                   "seed": seed,
+                   "image": x_sample
+                 }
+                 
+                 self.images.append(image_dict)
 
-              image_dict['image'] = x_sample
-              self.images.append(image_dict)
+                 if save_individual_images:
+                    sanitized_prompt = slugify(prompt)
+                    sample_path_i = sample_path
+                    base_count = get_next_sequence_number(sample_path_i)
+                    full_path = os.path.join(os.getcwd(), sample_path)
+                    filename = f"{base_count:05}-{ddim_steps}_{seed}_{sanitized_prompt}"[:200-len(full_path)]
 
-              # tbd: which is the right path name?
-              if save_individual_images and 1 == 0:
-                 path = os.path.join(sample_path, filename + '.' + self.save_extension)
-                 success = save_sample(image, filename, sample_path_i, self.save_extension)
+                    path = os.path.join(sample_path, filename + '.' + self.save_extension)
+                    success = save_sample(x_sample, filename, sample_path_i, self.save_extension)
 
-                 if success:
-                    if self.output_file_path:
-                       self.output_images.append(path)
+                    if success:
+                       if self.output_file_path:
+                          self.output_images.append(path)
+                       else:
+                          self.output_images.append(x_sample)
                     else:
-                       self.output_images.append(image)
-                 else:
-                    return
+                       return
 
         self.info = f"""
                 {prompt}
@@ -182,7 +181,7 @@ class inpainting:
             self.info += "\n\n" + comment
 
         # tbd: is this still needed?
-        #torch_gc()
+        torch_gc()
 
         del generator
 
