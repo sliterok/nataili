@@ -20,6 +20,7 @@ arg_parser.add_argument('-q', '--quiet', action='count', default=0, help="The de
 arg_parser.add_argument('--log_file', action='store_true', default=False, help="If specified will dump the log to the specified file")
 args = arg_parser.parse_args()
 
+from nataili.inference.diffusers.inpainting import inpainting
 from nataili.inference.compvis.img2img import img2img
 from nataili.model_manager import ModelManager
 from nataili.inference.compvis.txt2img import txt2img
@@ -141,7 +142,9 @@ def bridge(interval, model_manager, bd):
             use_nsfw_censor = True
         use_gfpgan = current_payload.get("use_gfpgan", True)
         use_real_esrgan = current_payload.get("use_real_esrgan", False)
+        source_processing = pop.get("source_processing")
         source_image = pop.get("source_image")
+        source_mask = pop.get("source_mask")
         # These params will always exist in the payload from the horde
         gen_payload = {
             "prompt": current_payload["prompt"],
@@ -164,15 +167,36 @@ def bridge(interval, model_manager, bd):
         # logger.debug(gen_payload)
         req_type = "txt2img"
         if source_image:
-            req_type = "img2img"
+           if source_processing == "img2img":
+              req_type = "img2img"
+           elif source_processing == "inpainting":
+              req_type = "inpainting"
+           if source_processing == "outpainting":
+              req_type = "outpainting"
         logger.debug(f"{req_type} ({model}) request with id {current_id} picked up. Initiating work...")
         try:
             safety_checker = model_manager.loaded_models['safety_checker']['model'] if 'safety_checker' in model_manager.loaded_models else None
             if source_image:
                 base64_bytes = source_image.encode('utf-8')
                 img_bytes = base64.b64decode(base64_bytes)
-                gen_payload['init_img'] = Image.open(BytesIO(img_bytes))
+                img_source = Image.open(BytesIO(img_bytes))
+                
+            if source_mask:
+                base64_bytes = source_mask.encode('utf-8')
+                img_bytes = base64.b64decode(base64_bytes)
+                img_mask = Image.open(BytesIO(img_bytes))
+
+            if req_type == "img2img":
+                gen_payload['init_img'] = img_source
                 generator = img2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
+                load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor)
+            elif req_type == "inpainting" or req_type == "outpainting":
+                gen_payload['inpaint_img'] = img_source
+
+                if img_mask:
+                   gen_payload['inpaint_mask'] = img_mask
+
+                generator = inpainting("cuda", 'bridge_generations')
                 load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor)
             else:
                 generator = txt2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
