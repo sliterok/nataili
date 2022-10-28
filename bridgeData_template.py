@@ -23,6 +23,8 @@ blacklist = []
 censorlist = []
 # If set to False, this worker will no longer pick img2img jobs
 allow_img2img = True
+# If set to True, this worker will can pick inpainting jobs
+allow_painting = True
 # If set to False, this worker will no longer pick img2img jobs from unsafe IPs
 allow_unsafe_ip = True
 # The models to use. You can select a different main model, or select more than one if you have enough VRAM

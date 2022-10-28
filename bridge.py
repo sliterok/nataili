@@ -54,6 +54,7 @@ class BridgeData(object):
         self.blacklist = list(filter(lambda a : a,os.environ.get("HORDE_BLACKLIST", "").split(",")))
         self.censorlist =  list(filter(lambda a : a,os.environ.get("HORDE_CENSORLIST", "").split(",")))
         self.allow_img2img = os.environ.get("HORDE_IMG2IMG", "true") == "true"
+        self.allow_painting = os.environ.get("HORDE_PAINTING", "true") == "true"
         self.allow_unsafe_ip = os.environ.get("HORDE_ALLOW_UNSAFE_IP", "true") == "true"
         self.model_names = os.environ.get("HORDE_MODELNAMES", "stable_diffusion").split(",")
         self.max_pixels = 64*64*8*self.max_power
@@ -84,8 +85,9 @@ def bridge(interval, model_manager, bd):
             "blacklist": bd.blacklist,
             "models": available_models,
             "allow_img2img": bd.allow_img2img,
+            "allow_painting": bd.allow_painting,
             "allow_unsafe_ip": bd.allow_unsafe_ip,
-            "bridge_version": 3,
+            "bridge_version": 4,
         }
         # logger.debug(gen_dict)
         headers = {"apikey": bd.api_key}
@@ -322,6 +324,10 @@ def load_bridge_data():
         except AttributeError:
             pass
         try:
+            bridge_data.allow_painting = bd.allow_painting
+        except AttributeError:
+            pass
+        try:
             bridge_data.allow_unsafe_ip = bd.allow_unsafe_ip
         except AttributeError:
             pass
@@ -338,6 +344,7 @@ def load_bridge_data():
     if args.blacklist: bridge_data.blacklist = args.blacklist
     if args.censorlist: bridge_data.censorlist = args.censorlist
     if args.allow_img2img: bridge_data.allow_img2img = args.allow_img2img
+    if args.allow_painting: bridge_data.allow_painting = args.allow_painting
     if args.allow_unsafe_ip: bridge_data.allow_unsafe_ip = args.allow_unsafe_ip
     if bridge_data.max_power < 2:
         bridge_data.max_power = 2
