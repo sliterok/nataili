@@ -1,28 +1,48 @@
-This repository includes a modified version of the nataili stable-diffusion server to show an inpainting prototype.
+This repository provides python libraries for running Stable Diffusion
 
-## Installation
-- ```git clone https://github.com/blueturtleai/nataili```
-- ```cd nataili```
+Sample use: 
 
-### Huggingface access token
-- Register on [Huggingface](https://huggingface.co/)
-- Go here https://huggingface.co/runwayml/stable-diffusion-inpainting
-- Agree to the terms
-- Create a token via Settings/Access Tokens
-- ```export HUGGING_FACE_HUB_TOKEN=<your huggingface token>```
+```python
+from nataili.model_manager import ModelManager
+from nataili.inference.compvis.txt2img import txt2img
+from nataili.util.cache import torch_gc
 
-## Run inpainting test
-```./runtime.sh python test_inpainting.py```
+# The model manager loads and unloads the SD models and has features to download them or find their location
+model_manager = ModelManager()
+model_manager.init()
+# The model to use for the generation. 
+model = "stable_diffusion"
+success = model_manager.load_model(model)
+if success:
+    print(f'{model} loaded')
+else:
+    print(f'{model} load error')
+# Other classes exist like img2img
+generator = txt2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'output_dir')
+generator.generate('a donkey with a hat')
+torch_gc()
+# The image key in the generator contains a PIL image of the generation
+image = generator.images[0]["image"]
+image.save('a_donkey_with_a_hat.png', format="Png")
+```
 
-- "inpaint_original.png" and "inpaint_mask.png" together with the prompt "a mecha robot sitting on a bench" are used to create a new image, where the dog will be replaced by a robot. Outputfile is "robot_sitting_on_a_bench.png".
+You can find more complete scripts in `test.py`
 
-## Changes
-It was necessary to make two changes in requirements.txt to make this working:
+# Stable Horde Bridge
 
-- diffusers 0.4.1 -> 0.6.0. 0.6.0 is needed for making the 1.5 inpainting model working.
-- transformers 4.19.2 -> latest version. Most likely, this will lead to a conflict because the line for version 4.19.2 was commented with "don't change". The newest version is needed, because otherwise errors occurred during generation.
+This repo contains the latest implementation for the [Stable Horde](https://stablehorde.net) Bridge. This will turn your graphics card(s) into a worker for the Stable Horde and you will receive in turn kudos which will give you priority for your own generations.
 
-## Comments
-- This is only a prototype which shows, how inpainting could be added to the nataili server in general. In "inpainting.py" I had to remove many code parts I copied over from "img2img.py" to make it working. Due to time restrictions, I were not able to study the existing code and modify it accordingly. Due to lack of a local GPU, I also had to rent an AWS server to develop this prototype.
+To run the bridge, simply run:
 
-- I would recommend, to integrate it in that way, that the client only sends one image which includes an Alpha channel. The Alpha channel holds the information, which part should be inpainted. The mask image file would be generated on the server side based on the Alpha channel. Imo that way more clients would be able to use inpainting, because they wouldn't need to create the mask image themselves.
+* Windows: `horde-bridge.cmd`
+* Linux: `horde-bridge.sh`
+
+This will take care of the setup for this environment and then automatically start the bridge.
+
+For more information, see: https://github.com/db0/AI-Horde/blob/main/README_StableHorde.md#joining-the-horde
+
+## Experimental
+
+The bridge has experimental inpainting support via Diffusers library. This **can** work in parallel with the compvis/ckpt implementation, but it is not suggested unless you have plenty of VRAM to spare.
+
+To set your worker to serve inpainting, add "stable_diffusion_inpainting" into your bridgeData's models_to_load list. The rest will be handled automatically. Workers without this model will not receive inpainting requests. Workers with **just** this model will **not** receive any requests **other** than inpainting! This will be fixed as soon as Diffusers are supported fully.
