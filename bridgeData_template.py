@@ -32,8 +32,9 @@ allow_unsafe_ip = True
 # if you do not know which models you can add here, use the below command
 # python show_available_models.py
 models_to_load = [
-    "stable_diffusion"
-    # "trinart"
-    # "Furry Epoch"
-    # "waifu_diffusion"
+    "stable_diffusion", # This is the standard compvis model. It is not using Diffusers (yet)
+    # "trinart",
+    # "Furry Epoch",
+    # "waifu_diffusion",
+    # "stable_diffusion_inpainting", # Enable this to allow inpainting/outpainting. Careful of trying to enable this in tandem with other models if you have 8G or less VRAM!
 ]

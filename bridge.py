@@ -268,22 +268,36 @@ def bridge(interval, model_manager, bd):
                 continue
         time.sleep(interval)
 
+def check_mm_auth(model_manager):
+    if model_manager.has_authentication():
+        return
+    try:
+        from creds import hf_username,hf_password
+    except:
+        hf_username = input("Please type your huggingface.co username: ")
+        hf_password = input("Please type your huggingface.co Access Token or password: ")
+    hf_auth = {"username": hf_username, "password": hf_password}
+    model_manager.set_authentication(hf_auth=hf_auth)
+
+
 @logger.catch(reraise=True)
-def check_models(models):
+def check_models(models, mm):
     logger.init("Models", status="Checking")
     from os.path import exists
     import sys
-    mm = ModelManager(download=False)
     models_exist = True
     not_found_models = []
     for model in models:
-        if not mm.get_model(model):
+        model_info = mm.get_model(model)
+        if not model_info:
             logger.error(f"Model name requested {model} in bridgeData is unknown to us. Please check your configuration. Aborting!")
             sys.exit(1)
         if not mm.validate_model(model):
             models_exist = False
             not_found_models.append(model)
-    
+        # Diffusers library uses its own internal download mechanism
+        if model_info['type'] == 'diffusers' and model_info['hf_auth']:
+            check_mm_auth(mm)
     if not models_exist:
         choice = input(f"You do not appear to have downloaded the models needed yet.\nYou need at least a main model to proceed. Would you like to download your prespecified models?\n\
         y: Download {not_found_models} (default).\n\
@@ -301,13 +315,7 @@ def check_models(models):
         if choice in ['all', 'a']:
             needs_hf = True
         if needs_hf:
-            try:
-                from creds import hf_username,hf_password
-            except:
-                hf_username = input("Please type your huggingface.co username: ")
-                hf_password = input("Please type your huggingface.co Access Token or password: ")
-            hf_auth = {"username": hf_username, "password": hf_password}
-            mm.set_authentication(hf_auth=hf_auth)
+            check_mm_auth(mm)
         mm.init()
         mm.taint_models(not_found_models)
         if choice in ['all', 'a']:
@@ -397,10 +405,8 @@ if __name__ == "__main__":
     quiesce_logger(args.quiet)
     bd = load_bridge_data()
     # test_logger()
-    check_models(bd.model_names)
-    from creds import hf_username,hf_password
-    hf_auth = {"username": hf_username, "password": hf_password}
-    model_manager = ModelManager(hf_auth=hf_auth, download=False)
+    model_manager = ModelManager()
+    check_models(bd.model_names, model_manager)
     model_manager.init()
     for model in bd.model_names:
         logger.init(f'{model}', status="Loading")

@@ -76,7 +76,6 @@ class ModelManager():
                     raise ValueError('hf_auth must contain username and password')
         return True
 
-    @logger.catch(reraise=True)
     def set_authentication(self, hf_auth=None):
         # We do not let No authentication override previously set auth
         if not hf_auth and self.hf_auth:
@@ -84,6 +83,11 @@ class ModelManager():
         self.hf_auth = hf_auth
         if hf_auth:
             os.environ["HUGGING_FACE_HUB_TOKEN"] = hf_auth.get('password')
+
+    def has_authentication(self):
+        if self.hf_auth:
+            return True
+        return False
 
     def get_model(self, model_name):
         return self.models.get(model_name)
