@@ -20,6 +20,7 @@ arg_parser.add_argument('-v', '--verbosity', action='count', default=0, help="Th
 arg_parser.add_argument('-q', '--quiet', action='count', default=0, help="The default logging level is ERROR or higher. This value decreases the amount of logging seen in your screen")
 arg_parser.add_argument('--log_file', action='store_true', default=False, help="If specified will dump the log to the specified file")
 arg_parser.add_argument('--skip_md5', action='store_true', default=False, help="If specified will not check the downloaded model md5sum.")
+arg_parser.add_argument('--disable_voodooray', action='store_true', default=False, help="If specified this bridge will not use voodooray to offload models into RAM and save VRAM (useful for cloud providers).")
 args = arg_parser.parse_args()
 
 from nataili.inference.diffusers.inpainting import inpainting
@@ -195,7 +196,7 @@ def bridge(interval, model_manager, bd):
                     img_mask = img_mask.resize(img_source.size)
             if req_type == "img2img":
                 gen_payload['init_img'] = img_source
-                generator = img2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
+                generator = img2img(args.disable_voodooray, model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
                 load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor)
             elif req_type == "inpainting" or req_type == "outpainting":
                 if "save_grid" in gen_payload: del gen_payload["save_grid"]
@@ -220,7 +221,7 @@ def bridge(interval, model_manager, bd):
                 logger.debug(gen_payload)
                 generator = inpainting(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations')
             else:
-                generator = txt2img(model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
+                generator = txt2img(args.disable_voodooray, model_manager.loaded_models[model]["model"], model_manager.loaded_models[model]["device"], 'bridge_generations',
                 load_concepts=True, concepts_dir='models/custom/sd-concepts-library', safety_checker=safety_checker, filter_nsfw=use_nsfw_censor)
         except KeyError:
             continue
@@ -421,7 +422,7 @@ if __name__ == "__main__":
     quiesce_logger(args.quiet)
     bd = load_bridge_data()
     # test_logger()
-    model_manager = ModelManager()
+    model_manager = ModelManager(disable_voodooray = args.disable_voodooray)
     check_models(bd.model_names, model_manager)
     model_manager.init()
     for model in bd.model_names:

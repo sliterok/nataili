@@ -1,4 +1,4 @@
-import os
+import osray
 import json
 import shutil
 import zipfile
@@ -32,7 +32,7 @@ remote_models = "https://raw.githubusercontent.com/Sygil-Dev/nataili-model-refer
 remote_dependencies = "https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/db_dep.json"
 
 class ModelManager():
-    def __init__(self, hf_auth=None, download=True):
+    def __init__(self, hf_auth=None, download=True, disable_voodooray = False):
         if download:
             try:
                 logger.init("Model Reference", status="Downloading")
@@ -54,6 +54,7 @@ class ModelManager():
         self.available_dependencies = []
         self.loaded_models = {}
         self.hf_auth = None
+        self.disable_voodooray = disable_voodooray
         self.set_authentication(hf_auth)
 
     def init(self):
@@ -181,7 +182,8 @@ class ModelManager():
         config_path = self.get_model_files(model_name)[1]['path']
         model = self.load_model_from_config(model_path=ckpt_path, config_path=config_path)
         device = torch.device(f"cuda:{gpu_id}")
-        model = push_model_to_plasma(model) if isinstance(model, torch.nn.Module) else model
+        if not self.disable_voodooray:
+            model = push_model_to_plasma(model) if isinstance(model, torch.nn.Module) else model
         torch_gc()
         return {'model': model, 'device': device}
     
