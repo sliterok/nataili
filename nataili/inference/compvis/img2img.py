@@ -30,7 +30,7 @@ class img2img:
     def __init__(self, model, device, output_dir, save_extension='jpg',
     output_file_path=False, load_concepts=False, concepts_dir=None,
     verify_input=True, auto_cast=True, filter_nsfw=False, safety_checker=None,
-    use_voodoo=False):
+    disable_voodoo=False):
         self.model = model
         self.output_dir = output_dir
         self.output_file_path = output_file_path
@@ -48,7 +48,7 @@ class img2img:
         self.filter_nsfw = filter_nsfw
         self.safety_checker = safety_checker
         self.feature_extractor = CLIPFeatureExtractor()
-        self.use_voodoo = use_voodoo
+        self.disable_voodoo = disable_voodoo
 
     def create_random_tensors(self, shape, seeds):
         xs = []
@@ -371,7 +371,7 @@ class img2img:
             noised[all_mask,:] = skimage.exposure.match_histograms(noised[all_mask,:]**1., noised[ref_mask,:], channel_axis=1)
 
             init_img = PIL.Image.fromarray(np.clip(noised * 255., 0., 255.).astype(np.uint8), mode="RGB")
-        if self.use_voodoo:
+        if not self.disable_voodoo:
             with load_from_plasma(self.model, self.device) as model:
                 seed = seed_to_int(seed)
                 image_dict = {

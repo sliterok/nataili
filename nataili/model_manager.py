@@ -32,7 +32,7 @@ remote_models = "https://raw.githubusercontent.com/Sygil-Dev/nataili-model-refer
 remote_dependencies = "https://raw.githubusercontent.com/Sygil-Dev/nataili-model-reference/main/db_dep.json"
 
 class ModelManager():
-    def __init__(self, hf_auth=None, download=True):
+    def __init__(self, hf_auth=None, download=True,disable_voodoo=True):
         if download:
             try:
                 logger.init("Model Reference", status="Downloading")
@@ -55,6 +55,7 @@ class ModelManager():
         self.loaded_models = {}
         self.hf_auth = None
         self.set_authentication(hf_auth)
+        self.disable_voodoo = disable_voodoo
 
     def init(self):
         dependencies_available = []
@@ -176,12 +177,12 @@ class ModelManager():
         del pl_sd, sd, m, u
         return model
 
-    def load_ckpt(self, model_name='', precision='half', gpu_id=0, use_voodoo=False):
+    def load_ckpt(self, model_name='', precision='half', gpu_id=0):
         ckpt_path = self.get_model_files(model_name)[0]['path']
         config_path = self.get_model_files(model_name)[1]['path']
         model = self.load_model_from_config(model_path=ckpt_path, config_path=config_path)
         device = torch.device(f"cuda:{gpu_id}")
-        if use_voodoo:
+        if not self.disable_voodoo:
             model = push_model_to_plasma(model) if isinstance(model, torch.nn.Module) else model
         else:
             model = (model if precision=='full' else model.half()).to(device)
@@ -245,11 +246,11 @@ class ModelManager():
         ).to("cuda")
         return {'model': pipe, 'device': "cuda"}
 
-    def load_model(self, model_name='', precision='half', gpu_id=0, use_voodoo=False):
+    def load_model(self, model_name='', precision='half', gpu_id=0):
         if model_name not in self.available_models:
             return False
         if self.models[model_name]['type'] == 'ckpt':
-            self.loaded_models[model_name] = self.load_ckpt(model_name, precision, gpu_id, use_voodoo)
+            self.loaded_models[model_name] = self.load_ckpt(model_name, precision, gpu_id)
             return True
         elif self.models[model_name]['type'] == 'realesrgan':
             self.loaded_models[model_name] = self.load_realesrgan(model_name, precision, gpu_id)

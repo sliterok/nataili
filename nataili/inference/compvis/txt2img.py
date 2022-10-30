@@ -26,7 +26,7 @@ class txt2img:
     def __init__(self, model, device, output_dir, save_extension='jpg',
     output_file_path=False, load_concepts=False, concepts_dir=None,
     verify_input=True, auto_cast=True, filter_nsfw=False, safety_checker=None,
-    use_voodoo=False):
+    disable_voodoo=False):
         self.model = model
         self.output_dir = output_dir
         self.output_file_path = output_file_path
@@ -44,7 +44,7 @@ class txt2img:
         self.filter_nsfw = filter_nsfw
         self.safety_checker = safety_checker
         self.feature_extractor = CLIPFeatureExtractor()
-        self.use_voodoo = use_voodoo
+        self.disable_voodoo = disable_voodoo
 
     def create_random_tensors(self, shape, seeds):
         xs = []
@@ -81,7 +81,7 @@ class txt2img:
     @performance
     def generate(self, prompt: str, ddim_steps=50, sampler_name='k_lms', n_iter=1, batch_size=1, cfg_scale=7.5, seed=None,
                 height=512, width=512, save_individual_images: bool = True, save_grid: bool = True, ddim_eta:float = 0.0):
-        if self.use_voodoo:
+        if not self.disable_voodoo:
             with load_from_plasma(self.model, self.device) as model:
                 # not needed?
                 model.half()
