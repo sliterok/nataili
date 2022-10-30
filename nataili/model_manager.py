@@ -1,4 +1,4 @@
-import osray
+import os
 import json
 import shutil
 import zipfile
