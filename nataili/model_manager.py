@@ -176,12 +176,15 @@ class ModelManager():
         del pl_sd, sd, m, u
         return model
 
-    def load_ckpt(self, model_name='', precision='half', gpu_id=0):
+    def load_ckpt(self, model_name='', precision='half', gpu_id=0, use_voodoo=False):
         ckpt_path = self.get_model_files(model_name)[0]['path']
         config_path = self.get_model_files(model_name)[1]['path']
         model = self.load_model_from_config(model_path=ckpt_path, config_path=config_path)
         device = torch.device(f"cuda:{gpu_id}")
-        model = push_model_to_plasma(model) if isinstance(model, torch.nn.Module) else model
+        if use_voodoo:
+            model = push_model_to_plasma(model) if isinstance(model, torch.nn.Module) else model
+        else:
+            model = (model if precision=='full' else model.half()).to(device)
         torch_gc()
         return {'model': model, 'device': device}
     
@@ -242,11 +245,11 @@ class ModelManager():
         ).to("cuda")
         return {'model': pipe, 'device': "cuda"}
 
-    def load_model(self, model_name='', precision='half', gpu_id=0):
+    def load_model(self, model_name='', precision='half', gpu_id=0, use_voodoo=False):
         if model_name not in self.available_models:
             return False
         if self.models[model_name]['type'] == 'ckpt':
-            self.loaded_models[model_name] = self.load_ckpt(model_name, precision, gpu_id)
+            self.loaded_models[model_name] = self.load_ckpt(model_name, precision, gpu_id, use_voodoo)
             return True
         elif self.models[model_name]['type'] == 'realesrgan':
             self.loaded_models[model_name] = self.load_realesrgan(model_name, precision, gpu_id)
