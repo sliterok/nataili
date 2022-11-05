@@ -4,7 +4,7 @@ from nataili.util import logger
 from nataili.util.voodoo import performance
 
 class Interrogator:
-    def __init__(self, model, preprocess, data_lists, device, batch_size=2000):
+    def __init__(self, model, preprocess, data_lists, device, batch_size=100):
         self.model = model
         self.preprocess = preprocess
         self.data_lists = data_lists
@@ -26,8 +26,8 @@ class Interrogator:
         top_probs, top_labels = similarity.cpu().topk(top_count, dim=-1)
         return [(text_array[top_labels[0][i].numpy()], (top_probs[0][i].numpy()*100)) for i in range(top_count)]
 
-    def batch_rank(self, model, image_features, text_array, device, batch_size=2000):
-        batch_size = min(batch_size, len(text_array))
+    def batch_rank(self, model, image_features, text_array, device):
+        batch_size = min(self.batch_size, len(text_array))
         batch_count = int(len(text_array) / batch_size)
         batches = []
         for i in range(batch_count + 1):
@@ -66,25 +66,25 @@ class Interrogator:
             best.sort(key=lambda x: x[1], reverse=True)
         
         medium = []
-        for m in bests[0]:
+        for m in bests[0][:1]:
             medium.append({'text': m[0], 'confidence': m[1]})
         artist = []
-        for a in bests[1]:
+        for a in bests[1][:2]:
             artist.append({'text': a[0], 'confidence': a[1]})
         trending = []
-        for t in bests[2]:
+        for t in bests[2][:2]:
             trending.append({'text': t[0], 'confidence': t[1]})
         movement = []
-        for m in bests[3]:
+        for m in bests[3][:2]:
             movement.append({'text': m[0], 'confidence': m[1]})
         flavors = []
-        for f in bests[4]:
+        for f in bests[4][:2]:
             flavors.append({'text': f[0], 'confidence': f[1]})
         techniques = []
-        for t in bests[5]:
+        for t in bests[5][:2]:
             techniques.append({'text': t[0], 'confidence': t[1]})
         tags = []
-        for t in bests[6]:
+        for t in bests[6][:2]:
             tags.append({'text': t[0], 'confidence': t[1]})
         return {
             'medium': medium,

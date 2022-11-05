@@ -27,7 +27,8 @@ interrogator = Interrogator(
     mm.loaded_models[model]["model"],
     mm.loaded_models[model]["preprocess"],
     mm.loaded_models[model]["data_lists"],
-    mm.loaded_models[model]["device"]
+    mm.loaded_models[model]["device"],
+    batch_size=100,
 )
 
 for _ in range(100):
