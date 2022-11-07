@@ -244,7 +244,15 @@ class CompVis:
                 )
             return samples_ddim
 
-        def sample(init_data, x, conditioning, unconditional_conditioning, sampler_name, karras=False, sigma_override: dict = None):
+        def sample(
+            init_data,
+            x,
+            conditioning,
+            unconditional_conditioning,
+            sampler_name,
+            karras=False,
+            sigma_override: dict = None,
+        ):
             samples_ddim, _ = sampler.sample(
                 S=ddim_steps,
                 conditioning=conditioning,
@@ -338,23 +346,26 @@ class CompVis:
 
                         x = create_random_tensors(shape, seeds=seeds, device=self.device)
                         init_data = init(model, init_img) if init_img else None
-                        
-                        samples_ddim = sample_img2img(
+
+                        samples_ddim = (
+                            sample_img2img(
                                 init_data=init_data,
                                 x=x,
                                 conditioning=c,
                                 unconditional_conditioning=uc,
                                 sampler_name=sampler_name,
-                                ) if init_img else \
-                                sample(
-                                    init_data=init_data,
-                                    x=x,
-                                    conditioning=c,
-                                    unconditional_conditioning=uc,
-                                    sampler_name=sampler_name,
-                                    karras=karras,
-                                    sigma_override=sigma_override,
-                                )
+                            )
+                            if init_img
+                            else sample(
+                                init_data=init_data,
+                                x=x,
+                                conditioning=c,
+                                unconditional_conditioning=uc,
+                                sampler_name=sampler_name,
+                                karras=karras,
+                                sigma_override=sigma_override,
+                            )
+                        )
 
                         x_samples_ddim = model.decode_first_stage(samples_ddim)
                         x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
@@ -422,22 +433,25 @@ class CompVis:
                     x = create_random_tensors(shape, seeds=seeds, device=self.device)
 
                     init_data = init(self.model, init_img) if init_img else None
-                    samples_ddim = sample_img2img(
-                                init_data=init_data,
-                                x=x,
-                                conditioning=c,
-                                unconditional_conditioning=uc,
-                                sampler_name=sampler_name,
-                                ) if init_img else \
-                                sample(
-                                    init_data=init_data,
-                                    x=x,
-                                    conditioning=c,
-                                    unconditional_conditioning=uc,
-                                    sampler_name=sampler_name,
-                                    karras=karras,
-                                    sigma_override=sigma_override,
-                                )
+                    samples_ddim = (
+                        sample_img2img(
+                            init_data=init_data,
+                            x=x,
+                            conditioning=c,
+                            unconditional_conditioning=uc,
+                            sampler_name=sampler_name,
+                        )
+                        if init_img
+                        else sample(
+                            init_data=init_data,
+                            x=x,
+                            conditioning=c,
+                            unconditional_conditioning=uc,
+                            sampler_name=sampler_name,
+                            karras=karras,
+                            sigma_override=sigma_override,
+                        )
+                    )
 
                     x_samples_ddim = self.model.decode_first_stage(samples_ddim)
                     x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
