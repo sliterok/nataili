@@ -122,7 +122,11 @@ def test():
             logger.info(f"Output dir: {output_dir}")
             logger.debug(f"Running inference on {model}")
             logger.info(f"Testing {len(samplers)} samplers")
-            prompt = "Headshot of cybernetic female character, cybernetic implants, solid background color, digital art, illustration, smooth color, cinematic moody lighting, cyberpunk, body modification, wenjun lin, studio ghibli, pixiv, artgerm, greg rutkowski, ilya kuvshinov"
+            prompt = (
+                "Headshot of cybernetic female character, cybernetic implants, solid background color,"
+                "digital art, illustration, smooth color, cinematic moody lighting, cyberpunk, body modification,"
+                "wenjun lin, studio ghibli, pixiv, artgerm, greg rutkowski, ilya kuvshinov"
+            )
             logger.info(f"Prompt: {prompt}")
             for sampler in samplers:
                 test_compvis(model, prompt, sampler, output_dir=output_dir)
