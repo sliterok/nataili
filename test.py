@@ -1,8 +1,7 @@
 import time
+import uuid
 
 import PIL
-
-import uuid
 
 from nataili.inference.compvis import CompVis
 from nataili.model_manager import ModelManager
