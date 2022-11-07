@@ -90,7 +90,7 @@ samplers = [
 step_counts = [5, 7, 8, 15]
 
 sigma_overrides = [
-    {"min": 0.6958, "max": 9.9172, "rho": 7.},
+    {"min": 0.6958, "max": 9.9172, "rho": 7.0},
 ]
 
 denoising_strengths = [0.22, 0.44, 0.88]
