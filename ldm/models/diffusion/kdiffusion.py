@@ -30,13 +30,10 @@ class KDiffusionSampler:
                 if S > 8:
                     sigmas = K.sampling.get_sigmas_karras(S, 0.0292, 14.6146, 7., self.model.device)
                 elif S == 8:
-                    print("S > 8")
                     sigmas = K.sampling.get_sigmas_karras(S, 0.0936, 14.6146, 7., self.model.device)
                 elif S <= 7 and S > 5:
-                    print("S <= 7 and S > 5")
                     sigmas = K.sampling.get_sigmas_karras(S, 0.1072, 14.6146, 7., self.model.device)
                 elif S <= 5:
-                    print("S <= 5")
                     sigmas = K.sampling.get_sigmas_karras(S, 0.1072, 7.0796, 9., self.model.device)
             else:
                 sigmas = K.sampling.get_sigmas_karras(S, sigma_override['min'], sigma_override['max'], sigma_override['rho'], self.model.device)
