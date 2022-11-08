@@ -1,9 +1,12 @@
-from PIL import Image
-from nataili.model_manager import ModelManager
-from nataili.inference.diffusers.inpainting import inpainting
-from nataili.util.logger import logger
-from nataili.util.cache import torch_gc
 import time
+
+from PIL import Image
+
+from nataili.inference.diffusers.inpainting import inpainting
+from nataili.model_manager import ModelManager
+from nataili.util.cache import torch_gc
+from nataili.util.logger import logger
+
 original = Image.open("./inpaint_original.png")
 mask = Image.open("./inpaint_mask.png")
 
@@ -29,5 +32,5 @@ toc = time.time()
 logger.init_ok(f"Loading {model}: Took {toc-tic} seconds", status=success)
 torch_gc()
 
-generator = inpainting(mm.loaded_models[model]['model'], "cuda", "output_dir")
-generator.generate("a mecha robot sitting on a bench", sampler='k_euler_a', inpaint_img=original, inpaint_mask=mask)
+generator = inpainting(mm.loaded_models[model]["model"], "cuda", "output_dir")
+generator.generate("a mecha robot sitting on a bench", sampler="k_euler_a", inpaint_img=original, inpaint_mask=mask)

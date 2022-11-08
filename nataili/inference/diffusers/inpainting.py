@@ -5,8 +5,8 @@ from contextlib import nullcontext
 import PIL
 import PIL.ImageOps
 import torch
+from diffusers.schedulers import EulerAncestralDiscreteScheduler, EulerDiscreteScheduler, LMSDiscreteScheduler
 from slugify import slugify
-from diffusers.schedulers import LMSDiscreteScheduler, EulerDiscreteScheduler, EulerAncestralDiscreteScheduler
 
 from nataili.util import logger
 from nataili.util.cache import torch_gc
@@ -102,7 +102,7 @@ class inpainting:
     def generate(
         self,
         prompt: str,
-        sampler: str = 'k_lms',
+        sampler: str = "k_lms",
         inpaint_img=None,
         inpaint_mask=None,
         ddim_steps=50,
