@@ -9,7 +9,7 @@ from diffusers.schedulers import (
     DPMSolverMultistepScheduler,
     EulerAncestralDiscreteScheduler,
     EulerDiscreteScheduler,
-    LMSDiscreteScheduler
+    LMSDiscreteScheduler,
 )
 from slugify import slugify
 
