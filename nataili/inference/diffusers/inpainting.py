@@ -5,7 +5,12 @@ from contextlib import nullcontext
 import PIL
 import PIL.ImageOps
 import torch
-from diffusers.schedulers import EulerAncestralDiscreteScheduler, EulerDiscreteScheduler, LMSDiscreteScheduler
+from diffusers.schedulers import (
+    DPMSolverMultistepScheduler,
+    EulerAncestralDiscreteScheduler,
+    EulerDiscreteScheduler,
+    LMSDiscreteScheduler
+)
 from slugify import slugify
 
 from nataili.util import logger
@@ -130,6 +135,13 @@ class inpainting:
             self.pipe.scheduler = scheduler
         elif sampler == "k_euler_a":
             scheduler = EulerAncestralDiscreteScheduler(
+                beta_start=0.00085,
+                beta_end=0.012,
+                beta_schedule="scaled_linear",
+            )
+            self.pipe.scheduler = scheduler
+        elif sampler == "k_dpmsm":
+            scheduler = DPMSolverMultistepScheduler(
                 beta_start=0.00085,
                 beta_end=0.012,
                 beta_schedule="scaled_linear",
