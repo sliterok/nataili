@@ -6,6 +6,7 @@ import PIL
 import PIL.ImageOps
 import torch
 from slugify import slugify
+from diffusers.schedulers import LMSDiscreteScheduler, EulerDiscreteScheduler, EulerAncestralDiscreteScheduler
 
 from nataili.util import logger
 from nataili.util.cache import torch_gc
@@ -101,6 +102,7 @@ class inpainting:
     def generate(
         self,
         prompt: str,
+        sampler: str = 'k_lms',
         inpaint_img=None,
         inpaint_mask=None,
         ddim_steps=50,
@@ -112,7 +114,27 @@ class inpainting:
         width=512,
         save_individual_images: bool = True,
     ):
-
+        if sampler == "k_lms":
+            scheduler = LMSDiscreteScheduler(
+                beta_start=0.00085,
+                beta_end=0.012,
+                beta_schedule="scaled_linear",
+            )
+            self.pipe.scheduler = scheduler
+        elif sampler == "k_euler":
+            scheduler = EulerDiscreteScheduler(
+                beta_start=0.00085,
+                beta_end=0.012,
+                beta_schedule="scaled_linear",
+            )
+            self.pipe.scheduler = scheduler
+        elif sampler == "k_euler_a":
+            scheduler = EulerAncestralDiscreteScheduler(
+                beta_start=0.00085,
+                beta_end=0.012,
+                beta_schedule="scaled_linear",
+            )
+            self.pipe.scheduler = scheduler
         safety_checker = None
         if not self.filter_nsfw:
             safety_checker = self.pipe.safety_checker

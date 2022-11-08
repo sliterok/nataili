@@ -1,11 +1,33 @@
 from PIL import Image
-
+from nataili.model_manager import ModelManager
 from nataili.inference.diffusers.inpainting import inpainting
-
+from nataili.util.logger import logger
+from nataili.util.cache import torch_gc
+import time
 original = Image.open("./inpaint_original.png")
 mask = Image.open("./inpaint_mask.png")
 
-generator = inpainting("cuda", "output_dir")
-generator.generate("a mecha robot sitting on a bench", original, mask)
-image = generator.images[0]["image"]
-image.save("robot_sitting_on_a_bench.png", format="PNG")
+mm = ModelManager()
+
+mm.init()
+logger.debug("Available dependencies:")
+for dependency in mm.available_dependencies:
+    logger.debug(dependency)
+
+logger.debug("Available models:")
+for model in mm.available_models:
+    logger.debug(model)
+
+model = "stable_diffusion_inpainting"
+
+tic = time.time()
+logger.init(f"Model: {model}", status="Loading")
+
+success = mm.load_model(model)
+
+toc = time.time()
+logger.init_ok(f"Loading {model}: Took {toc-tic} seconds", status=success)
+torch_gc()
+
+generator = inpainting(mm.loaded_models[model]['model'], "cuda", "output_dir")
+generator.generate("a mecha robot sitting on a bench", sampler='k_euler_a', inpaint_img=original, inpaint_mask=mask)
