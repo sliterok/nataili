@@ -261,6 +261,7 @@ class HordeJob:
                 filter_nsfw=use_nsfw_censor,
                 disable_voodoo=disable_voodoo.active,
             )
+            logger.debug("Finished loading compvis")
         else:
             # These variables do not exist in the outpainting implementation
             if "save_grid" in gen_payload:
@@ -290,6 +291,7 @@ class HordeJob:
         try:
             generator.generate(**gen_payload)
             torch_gc()
+            logger.debug("Finished generation")
         except RuntimeError as err:
             stack_payload = gen_payload
             stack_payload["request_type"] = req_type
@@ -309,8 +311,7 @@ class HordeJob:
         # Not a daemon, so that it can survive after this class is garbage collected
         submit_thread = threading.Thread(target=self.submit_job, args=())
         submit_thread.start()
-        if not self.current_generation:
-            time.sleep(self.retry_interval)
+        logger.debug("Starting submit thread")
 
     def submit_job(self):
         self.status = JobStatus.FINALIZING
