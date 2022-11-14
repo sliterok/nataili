@@ -190,8 +190,7 @@ class ModelManager:
         if cuda_arch >= 80:
             return self.aitemplates[model_name]['config']['sm80']['files']
         elif cuda_arch == 75:
-            raise ValueError("CUDA Compute Capability not supported")
-            #return self.aitemplates[model_name]['config']['sm75']['files']
+            return self.aitemplates[model_name]['config']['sm75']['files']
         elif cuda_arch == 70:
             raise ValueError("CUDA Compute Capability not supported")
             #return self.aitemplates[model_name]['config']['sm70']['files']
@@ -202,8 +201,7 @@ class ModelManager:
         if cuda_arch >= 80:
             return self.aitemplates[model_name]['config']['sm80']['download']
         elif cuda_arch == 75:
-            raise ValueError("CUDA Compute Capability not supported")
-            #return self.aitemplates[model_name]['config']['sm75']['download']
+            return self.aitemplates[model_name]['config']['sm75']['download']
         elif cuda_arch == 70:
             raise ValueError("CUDA Compute Capability not supported")
             #return self.aitemplates[model_name]['config']['sm70']['download']
