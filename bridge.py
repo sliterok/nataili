@@ -24,15 +24,24 @@ def bridge(model_manager, bd):
         if len(running_jobs) < bd.max_threads:
             new_job = HordeJob(model_manager, bd)
             running_jobs.append(new_job)
-            # logger.debug(f"started {new_job}")
+            logger.debug(f"started {new_job}")
             continue
+        thread_debug = []
         for job in running_jobs:
+            thread_debug.append(
+                {
+                    "thread": t,
+                    "id": t.current_id,
+                    "status": t.status
+                }
+            )
             if job.is_finished():
                 job.delete()
                 running_jobs.remove(job)
-                # logger.debug(f"removed {job}")
+                logger.debug(f"removed {job}")
             elif job.is_polling():
                 polling_jobs += 1
+        logger.debug(f"current threads {thread_debug}")
         if len(running_jobs) and polling_jobs == len(running_jobs):
             found_reason = None
             for j in running_jobs:
