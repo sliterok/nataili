@@ -111,7 +111,6 @@ class CompVis:
 
         assert 0.0 <= denoising_strength <= 1.0, "can only work with strength in [0.0, 1.0]"
         t_enc = int(denoising_strength * ddim_steps)
-        logger.debug('1')
         if (
             init_mask is not None
             and (noise_mode == "matched" or noise_mode == "find_and_matched")
@@ -277,7 +276,6 @@ class CompVis:
             prompt, negprompt = prompt.split("###", 1)
             prompt = prompt.strip()
             negprompt = negprompt.strip()
-        logger.debug('2')
 
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -288,7 +286,6 @@ class CompVis:
         if "karras" in sampler_name:
             karras = True
             sampler_name = sampler_name.replace("_karras", "")
-        logger.debug('3')
 
         if not self.disable_voodoo:
             logger.debug('Loading Plasma')
@@ -319,7 +316,6 @@ class CompVis:
                     sampler = KDiffusionSampler(model, "dpmpp_2m")
                 else:
                     raise Exception("Unknown sampler: " + sampler_name)
-                logger.debug('Finished plasma')
                 if self.load_concepts and self.concepts_dir is not None:
                     prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                     if prompt_tokens:
@@ -381,9 +377,11 @@ class CompVis:
 
                         x_samples_ddim = model.decode_first_stage(samples_ddim)
                         x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
+                        logger.debug(f"torch.no_grad() {n}/{n_iter}")
                 logger.debug('Finished torch.no_grad()')
-
+            logger.debug('Finished plasma')
         else:
+            logger.debug("Started WITHOUT Plasma")
             if sampler_name == "PLMS":
                 sampler = PLMSSampler(self.model)
             elif sampler_name == "DDIM":
@@ -468,7 +466,6 @@ class CompVis:
 
                     x_samples_ddim = self.model.decode_first_stage(samples_ddim)
                     x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
-
         logger.debug('Creating images')
         for i, x_sample in enumerate(x_samples_ddim):
             sanitized_prompt = slugify(prompts[i])
