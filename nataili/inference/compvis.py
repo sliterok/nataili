@@ -377,8 +377,9 @@ class CompVis:
 
                         x_samples_ddim = model.decode_first_stage(samples_ddim)
                         x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
-                        logger.debug(f"torch.no_grad() {n}/{n_iter}")
-                logger.debug('Finished torch.no_grad()')
+                        logger.debug(f"torch.no_grad() loop {n + 1}/{n_iter}")
+                    logger.debug('Finished torch.no_grad() loops')
+                logger.debug('Finished with torch.no_grad()')
             logger.debug('Finished plasma')
         else:
             logger.debug("Started WITHOUT Plasma")

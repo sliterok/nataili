@@ -66,11 +66,15 @@ def replace_tensors(m: torch.nn.Module, tensors: List[Dict], device="cuda"):
 
 @contextlib.contextmanager
 def load_from_plasma(ref, device="cuda"):
+    logger.debug("load_from_plasma()")
     skeleton, weights = ray.get(ref)
     replace_tensors(skeleton, weights, device=device)
     skeleton.eval().to(device, memory_format=torch.channels_last)
+    logger.debug("yielding load_from_plasma()")
     yield skeleton
+    logger.debug("returned from yielding load_from_plasma()")
     torch.cuda.empty_cache()
+    logger.debug("finished load_from_plasma()")
 
 
 def push_model_to_plasma(model: torch.nn.Module) -> ray.ObjectRef:
