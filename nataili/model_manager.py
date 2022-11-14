@@ -98,7 +98,9 @@ class ModelManager:
             return None
 
     def get_ait_workdir(self, cuda_arch, model_name="stable_diffusion"):
-        if cuda_arch >= 80:
+        if cuda_arch == 89:
+            return f"./{self.aitemplates[model_name]['config']['sm89']['download'][0]['file_path']}/"
+        elif cuda_arch >= 80 and cuda_arch < 89:
             return f"./{self.aitemplates[model_name]['config']['sm80']['download'][0]['file_path']}/"
         elif cuda_arch == 75:
             return f"./{self.aitemplates[model_name]['config']['sm75']['download'][0]['file_path']}/"
@@ -187,7 +189,9 @@ class ModelManager:
         return self.models[model_name]["config"]["files"]
     
     def get_aitemplate_files(self, cuda_arch, model_name="stable_diffusion"):
-        if cuda_arch >= 80:
+        if cuda_arch == 89:
+            return self.aitemplates[model_name]["config"]["sm89"]["files"]
+        elif cuda_arch >= 80 and cuda_arch < 89:
             return self.aitemplates[model_name]['config']['sm80']['files']
         elif cuda_arch == 75:
             return self.aitemplates[model_name]['config']['sm75']['files']
@@ -198,7 +202,9 @@ class ModelManager:
             raise ValueError("CUDA Compute Capability not supported")
 
     def get_aitemplate_download(self, cuda_arch, model_name="stable_diffusion"):
-        if cuda_arch >= 80:
+        if cuda_arch == 89:
+            return self.aitemplates[model_name]["config"]["sm89"]["download"]
+        elif cuda_arch >= 80 and cuda_arch < 89:
             return self.aitemplates[model_name]['config']['sm80']['download']
         elif cuda_arch == 75:
             return self.aitemplates[model_name]['config']['sm75']['download']

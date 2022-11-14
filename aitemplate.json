@@ -7,6 +7,39 @@
     "style": "generalist",
     "nsfw": false,
     "config": {
+      "sm89": {
+        "files": [
+          {
+            "path": "models/aitemplate/sd-v1-5/unet.so",
+            "md5sum": "141751b55204140717baca732c764337"
+          },
+          {
+            "path": "models/aitemplate/sd-v1-5/vae.so",
+            "md5sum": "14aab18dd5e30b5045acf5f3e236a777"
+          },
+          {
+            "path": "models/aitemplate/sd-v1-5/clip.so",
+            "md5sum": "0b27cf5e4019ad4e146bbec36f236d84"
+          }
+        ],
+        "download": [
+          {
+            "file_name": "unet.so",
+            "file_path": "models/aitemplate/sd-v1-5",
+            "file_url": "https://r2.sygil.dev/sm89/sd-v1-5/unet.so"
+          },
+          {
+            "file_name": "vae.so",
+            "file_path": "models/aitemplate/sd-v1-5",
+            "file_url": "https://r2.sygil.dev/sm89/sd-v1-5/vae.so"
+          },
+          {
+            "file_name": "clip.so",
+            "file_path": "models/aitemplate/sd-v1-5",
+            "file_url": "https://r2.sygil.dev/sm89/sd-v1-5/clip.so"
+          }
+        ]
+      },
       "sm80": {
         "files": [
           {
