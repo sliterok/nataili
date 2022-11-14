@@ -289,7 +289,7 @@ class HordeJob:
                 filter_nsfw=use_nsfw_censor,
             )
         try:
-            logger.debug("Startubg generation")
+            logger.debug("Starting generation")
             generator.generate(**gen_payload)
             logger.debug("Starting GC")
             torch_gc()

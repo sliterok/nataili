@@ -111,7 +111,7 @@ class CompVis:
 
         assert 0.0 <= denoising_strength <= 1.0, "can only work with strength in [0.0, 1.0]"
         t_enc = int(denoising_strength * ddim_steps)
-
+        logger.debug('1')
         if (
             init_mask is not None
             and (noise_mode == "matched" or noise_mode == "find_and_matched")
@@ -153,6 +153,7 @@ class CompVis:
             init_img = PIL.Image.fromarray(np.clip(noised * 255.0, 0.0, 255.0).astype(np.uint8), mode="RGB")
 
         def init(model, init_img):
+            logger.debug('init')
             image = init_img.convert("RGB")
             image = np.array(image).astype(np.float32) / 255.0
             image = image[None].transpose(0, 3, 1, 2)
@@ -181,6 +182,7 @@ class CompVis:
             )
 
         def sample_img2img(init_data, x, conditioning, unconditional_conditioning, sampler_name):
+            logger.debug('starting sample_img2img')
             nonlocal sampler
             t_enc_steps = t_enc
             obliterate = False
@@ -242,6 +244,7 @@ class CompVis:
                     z_mask=z_mask,
                     x0=x0,
                 )
+            logger.debug('Finished sample_img2img')
             return samples_ddim
 
         def sample(
@@ -253,6 +256,7 @@ class CompVis:
             karras=False,
             sigma_override: dict = None,
         ):
+            logger.debug('Starting sample')
             samples_ddim, _ = sampler.sample(
                 S=ddim_steps,
                 conditioning=conditioning,
@@ -262,6 +266,7 @@ class CompVis:
                 karras=karras,
                 sigma_override=sigma_override,
             )
+            logger.debug('Finished sample')
             return samples_ddim
 
         seed = seed_to_int(seed)
@@ -272,6 +277,7 @@ class CompVis:
             prompt, negprompt = prompt.split("###", 1)
             prompt = prompt.strip()
             negprompt = negprompt.strip()
+        logger.debug('2')
 
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -282,8 +288,10 @@ class CompVis:
         if "karras" in sampler_name:
             karras = True
             sampler_name = sampler_name.replace("_karras", "")
+        logger.debug('3')
 
         if not self.disable_voodoo:
+            logger.debug('Loading Plasma')
             with load_from_plasma(self.model, self.device) as model:
                 if sampler_name == "PLMS":
                     sampler = PLMSSampler(model)
@@ -311,10 +319,12 @@ class CompVis:
                     sampler = KDiffusionSampler(model, "dpmpp_2m")
                 else:
                     raise Exception("Unknown sampler: " + sampler_name)
+                logger.debug('Finished plasma')
                 if self.load_concepts and self.concepts_dir is not None:
                     prompt_tokens = re.findall("<([a-zA-Z0-9-]+)>", prompt)
                     if prompt_tokens:
                         process_prompt_tokens(prompt_tokens, model, self.concepts_dir)
+                logger.debug('Finished concepts')
                 if self.verify_input:
                     try:
                         check_prompt_length(model, prompt, self.comments)
@@ -327,6 +337,7 @@ class CompVis:
                     all_prompts = batch_size * n_iter * [prompt]
                     all_seeds = [seed + x for x in range(len(all_prompts))]
 
+                logger.debug('Starting torch.no_grad()')
                 with torch.no_grad():
                     for n in range(n_iter):
                         print(f"Iteration: {n+1}/{n_iter}")
@@ -347,6 +358,7 @@ class CompVis:
                         x = create_random_tensors(shape, seeds=seeds, device=self.device)
                         init_data = init(model, init_img) if init_img else None
 
+                        logger.debug('Starting sampling')
                         samples_ddim = (
                             sample_img2img(
                                 init_data=init_data,
@@ -369,6 +381,7 @@ class CompVis:
 
                         x_samples_ddim = model.decode_first_stage(samples_ddim)
                         x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
+                logger.debug('Finished torch.no_grad()')
 
         else:
             if sampler_name == "PLMS":
@@ -456,6 +469,7 @@ class CompVis:
                     x_samples_ddim = self.model.decode_first_stage(samples_ddim)
                     x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
 
+        logger.debug('Creating images')
         for i, x_sample in enumerate(x_samples_ddim):
             sanitized_prompt = slugify(prompts[i])
             full_path = os.path.join(os.getcwd(), sample_path)
@@ -492,6 +506,7 @@ class CompVis:
                         self.output_images.append(image)
                 else:
                     return
+        logger.debug('Finished images')
 
         self.info = f"""
                 {prompt}
@@ -504,6 +519,7 @@ class CompVis:
             self.info += "\n\n" + comment
 
         torch_gc()
+        logger.debug('Exiting')
 
         del sampler
 
