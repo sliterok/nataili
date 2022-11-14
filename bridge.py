@@ -30,9 +30,9 @@ def bridge(model_manager, bd):
         for job in running_jobs:
             thread_debug.append(
                 {
-                    "thread": t,
-                    "id": t.current_id,
-                    "status": t.status
+                    "thread": job,
+                    "id": job.current_id,
+                    "status": job.status
                 }
             )
             if job.is_finished():
