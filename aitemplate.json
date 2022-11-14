@@ -44,32 +44,32 @@
         "files": [
           {
             "path": "models/aitemplate/sd-v1-5/unet.so",
-            "md5sum": "ace15be716aa841f676c32abf4cc0aaa"
+            "md5sum": "e7d677680ee03598f72c5b9e9bb37045"
           },
           {
             "path": "models/aitemplate/sd-v1-5/vae.so",
-            "md5sum": "34710cee7ab6aedece8f20b20a2b491f"
+            "md5sum": "8e488db4853394606a52e05d8e890301"
           },
           {
             "path": "models/aitemplate/sd-v1-5/clip.so",
-            "md5sum": "84bad27618b5994c777b550856f21fa1"
+            "md5sum": "f8fa7ec85f1a7787a031a7c9fac37179"
           }
         ],
         "download": [
           {
             "file_name": "unet.so",
             "file_path": "models/aitemplate/sd-v1-5",
-            "file_url": "unet.so"
+            "file_url": "https://r2.sygil.dev/sm75/sd-v1-5/unet.so"
           },
           {
             "file_name": "vae.so",
             "file_path": "models/aitemplate/sd-v1-5",
-            "file_url": "vae.so"
+            "file_url": "https://r2.sygil.dev/sm75/sd-v1-5/vae.so"
           },
           {
             "file_name": "clip.so",
             "file_path": "models/aitemplate/sd-v1-5",
-            "file_url": "clip.so"
+            "file_url": "https://r2.sygil.dev/sm75/sd-v1-5/clip.so"
           }
         ]
       },
