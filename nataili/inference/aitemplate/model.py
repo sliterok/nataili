@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
+# flake8: noqa: E731
 """
 Python bindings to the AIT runtime.
 """
@@ -609,9 +609,7 @@ class Model(object):
     def _construct_input_name_to_index_map(self) -> Dict[str, int]:
         num_inputs = ctypes.c_size_t()
         self.DLL.AITemplateModelContainerGetNumInputs(self.handle, ctypes.byref(num_inputs))
-        get_input_name = lambda idx, name: self.DLL.AITemplateModelContainerGetInputName(
-            self.handle, idx, name
-        )  # noqa: E731
+        get_input_name = lambda idx, name: self.DLL.AITemplateModelContainerGetInputName(self.handle, idx, name)
         return self._get_map_helper(num_inputs.value, get_input_name)
 
     def get_input_name_to_index_map(self) -> Dict[str, int]:
@@ -627,9 +625,7 @@ class Model(object):
     def _construct_output_name_to_index_map(self) -> Dict[str, int]:
         num_outputs = ctypes.c_size_t()
         self.DLL.AITemplateModelContainerGetNumOutputs(self.handle, ctypes.byref(num_outputs))
-        get_output_name = lambda idx, name: self.DLL.AITemplateModelContainerGetOutputName(
-            self.handle, idx, name
-        )  # noqa: E731
+        get_output_name = lambda idx, name: self.DLL.AITemplateModelContainerGetOutputName(self.handle, idx, name)
         return self._get_map_helper(num_outputs.value, get_output_name)
 
     def get_output_name_to_index_map(self) -> Dict[str, int]:
