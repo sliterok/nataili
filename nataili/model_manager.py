@@ -12,12 +12,12 @@ import torch
 from basicsr.archs.rrdbnet_arch import RRDBNet
 from diffusers import StableDiffusionInpaintPipeline
 from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
+from gfpgan import GFPGANer
 from omegaconf import OmegaConf
 from realesrgan import RealESRGANer
 from tqdm import tqdm
 from transformers import logging
 
-from gfpgan import GFPGANer
 from ldm.models.blip import blip_decoder
 from ldm.util import instantiate_from_config
 from nataili.inference.aitemplate.ait_pipeline import StableDiffusionAITPipeline
