@@ -1,15 +1,8 @@
-# Class realesrgan
-# Inputs:
-#  - model
-#  - device
-#  - output_dir
-#  - output_ext
-# outupts:
-#  - output_images
 import os
+import uuid
 
-import cv2
-import PIL
+import numpy as np
+import PIL.Image
 
 from nataili.util.save_sample import save_sample
 
@@ -22,23 +15,24 @@ class realesrgan:
         self.output_ext = output_ext
         self.output_images = []
 
-    def generate(self, input_image):
-        # load image
-        img = cv2.imread(input_image, cv2.IMREAD_UNCHANGED)
-        if len(img.shape) == 3 and img.shape[2] == 4:
-            img_mode = "RGBA"
+    def __call__(self, input_image: PIL.Image = None, input_path: str = None):
+        img = None
+        if input_image is not None:
+            img = input_image
+            img_array = np.array(img)
+        elif input_path is not None:
+            img = PIL.Image.open(input_path)
+            img_array = np.array(img)
         else:
-            img_mode = None
-        # upscale
-        output, _ = self.model.enhance(img)
-        if img_mode == "RGBA":  # RGBA images should be saved in png format
+            raise ValueError("No input image or path provided")
+        output, _ = self.model.enhance(img_array)
+        output_array = np.array(output)
+        esrgan_image = PIL.Image.fromarray(output_array)
+        if img.mode == "RGBA":
             self.output_ext = "png"
-
-        esrgan_sample = output[:, :, ::-1]
-        esrgan_image = PIL.Image.fromarray(esrgan_sample)
-        # append model name to output image name
-        filename = os.path.basename(input_image)
-        filename = os.path.splitext(filename)[0]
+        filename = (
+            os.path.basename(input_path).splitext(input_path)[0] if input_path is not None else str(uuid.uuid4())
+        )
         filename = f"{filename}_esrgan"
         filename_with_ext = f"{filename}.{self.output_ext}"
         output_image = os.path.join(self.output_dir, filename_with_ext)
