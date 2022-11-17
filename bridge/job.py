@@ -319,7 +319,7 @@ class HordeJob:
         # We unload the generator from RAM
         generator = None
         for post_processor in self.current_payload.get("post_processing", []):
-            logger.info(f"Post-processing with {post_processor}...")
+            logger.debug(f"Post-processing with {post_processor}...")
             try:
                 self.image = post_process(post_processor, self.image, self.model_manager)
             except AssertionError:
