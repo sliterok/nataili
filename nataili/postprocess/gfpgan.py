@@ -16,7 +16,7 @@ class gfpgan:
         self.output_images = []
         self.save_individual_images = save_individual_images
 
-    def __call__(self, input_image: PIL.Image = None, input_path: str = None, strength: float = 1.0):
+    def __call__(self, input_image: PIL.Image = None, input_path: str = None, strength: float = 1.0, **kwargs):
         img = None
         if input_image is not None:
             img = input_image

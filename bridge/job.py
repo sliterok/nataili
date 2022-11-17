@@ -11,7 +11,7 @@ from io import BytesIO
 import requests
 from PIL import Image, UnidentifiedImageError
 
-from bridge import JobStatus, bridge_stats, fix_face, disable_voodoo
+from bridge import JobStatus, bridge_stats, disable_voodoo, post_process
 from nataili.inference.compvis import CompVis
 from nataili.inference.diffusers.inpainting import inpainting
 from nataili.util import logger
@@ -30,6 +30,7 @@ class HordeJob:
         self.loop_retry = 0
         self.status = JobStatus.INIT
         self.skipped_info = None
+        self.upload_quality = 90
 
         thread = threading.Thread(target=self.start_job, args=())
         thread.daemon = True
@@ -319,11 +320,14 @@ class HordeJob:
             self.image = censor_image
         # We unload the generator from RAM
         generator = None
-        if self.current_payload.get("use_gfpgan", False):
+        for post_processor in self.current_payload.get("post_processing", []):
+            logger.info(f"Post-processing with {post_processor}...")
             try:
-                self.image = fix_face(self.image, self.model_manager)
+                self.image = post_process(post_processor, self.image, self.model_manager)
             except AssertionError:
-                logger.error("Facefixer encountered an error when working on image. Skipping!")
+                logger.warning(f"Post-Processor '{post_processor}' encountered an error when working on image . Skipping!")
+            if post_processor in ["RealESRGAN_x4plus"]:
+                self.upload_quality = 50
         # Not a daemon, so that it can survive after this class is garbage collected
         submit_thread = threading.Thread(target=self.submit_job, args=())
         submit_thread.start()
@@ -334,7 +338,7 @@ class HordeJob:
         # images, seed, info, stats = txt2img(**self.current_payload)
         buffer = BytesIO()
         # We send as WebP to avoid using all the horde bandwidth
-        self.image.save(buffer, format="WebP", quality=90)
+        self.image.save(buffer, format="WebP", quality=self.upload_quality)
         self.submit_dict = {
             "id": self.current_id,
             "generation": base64.b64encode(buffer.getvalue()).decode("utf8"),
