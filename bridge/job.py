@@ -11,7 +11,7 @@ from io import BytesIO
 import requests
 from PIL import Image, UnidentifiedImageError
 
-from bridge import JobStatus, bridge_stats, disable_voodoo
+from bridge import JobStatus, bridge_stats, fix_face, disable_voodoo
 from nataili.inference.compvis import CompVis
 from nataili.inference.diffusers.inpainting import inpainting
 from nataili.util import logger
@@ -27,7 +27,6 @@ class HordeJob:
         self.current_id = None
         self.current_payload = None
         self.current_model = None
-        self.current_generation = None
         self.loop_retry = 0
         self.status = JobStatus.INIT
         self.skipped_info = None
@@ -70,7 +69,7 @@ class HordeJob:
             "allow_painting": self.bd.allow_painting,
             "allow_unsafe_ip": self.bd.allow_unsafe_ip,
             "threads": self.bd.max_threads,
-            "bridge_version": 6,
+            "bridge_version": 7,
         }
         # logger.debug(gen_dict)
         self.headers = {"apikey": self.bd.api_key}
@@ -320,12 +319,14 @@ class HordeJob:
             self.image = censor_image
         # We unload the generator from RAM
         generator = None
-        self.current_generation = self.seed
+        if self.current_payload.get("use_gfpgan", False):
+            try:
+                self.image = fix_face(self.image, self.model_manager)
+            except AssertionError:
+                logger.error("Facefixer encountered an error when working on image. Skipping!")
         # Not a daemon, so that it can survive after this class is garbage collected
         submit_thread = threading.Thread(target=self.submit_job, args=())
         submit_thread.start()
-        if not self.current_generation:
-            time.sleep(self.retry_interval)
 
     def submit_job(self):
         self.status = JobStatus.FINALIZING

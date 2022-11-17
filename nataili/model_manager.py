@@ -246,6 +246,9 @@ class ModelManager:
     def get_loaded_model(self, model_name):
         return self.loaded_models[model_name]
 
+    def is_model_loaded(self, model_name):
+        return model_name in self.loaded_models
+        
     def unload_model(self, model_name):
         if model_name in self.loaded_models:
             del self.loaded_models[model_name]
