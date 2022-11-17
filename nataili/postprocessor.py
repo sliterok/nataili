@@ -16,21 +16,24 @@ class PostProcessor:
         self.output_images = []
         self.save_individual_images = save_individual_images
         self.set_filename_append()
-    
-    def set_filename_append(self):
-        self.filename_append = 'post_processed'
 
-    # Example __call__ function. Classes should override this with their own
+    def set_filename_append(self):
+        self.filename_append = "post_processed"
+
+
     def __call__(self, input_image: PIL.Image = None, input_path: str = None, **kwargs):
-        img, img_array = self.parse_image(input_image)
-        output, _ = self.model.enhance(img_array)
-        output_array = np.array(output)
-        output_image = PIL.Image.fromarray(output_array)
+        img, img_array = self.parse_image(input_image, input_path)
+        output_image = self.process(img, img_array, **kwargs)
+        self.output_images.append(output_image)
         if self.save_individual_images:
             self.store_to_disk(input_path, output_image)
-        self.output_images.append(output_image)
 
-    def parse_image(self, input_image):
+    # This should be overriden by each class
+    def process(self, img, img_array, **kwargs):
+        '''Processes the image with the post-processor model'''
+        return(img)
+
+    def parse_image(self, input_image, input_path):
         img = None
         if input_image is not None:
             img = input_image
