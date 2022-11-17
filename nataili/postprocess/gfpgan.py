@@ -8,7 +8,7 @@ from nataili.util.save_sample import save_sample
 
 
 class gfpgan:
-    def __init__(self, model, device, output_dir = './', output_ext="jpg", save_individual_images=True):
+    def __init__(self, model, device, output_dir="./", output_ext="jpg", save_individual_images=True):
         self.model = model
         self.device = device
         self.output_dir = output_dir
@@ -37,7 +37,7 @@ class gfpgan:
             )
             filename = f"{filename}_gfpgan"
             filename_with_ext = f"{filename}.{self.output_ext}"
-            output_image = os.path.join(self.output_dir, filename_with_ext)
+            # output_image = os.path.join(self.output_dir, filename_with_ext)
             save_sample(gfpgan_image, filename, self.output_dir, self.output_ext)
         self.output_images.append(gfpgan_image)
         return
