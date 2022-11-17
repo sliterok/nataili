@@ -1,6 +1,10 @@
 from nataili.postprocessor import *
 
+
 class realesrgan(PostProcessor):
+    
+    def set_filename_append(self):
+        self.filename_append = 'realesrgan'
 
     def __call__(self, input_image: PIL.Image = None, input_path: str = None, **kwargs):
         img = None

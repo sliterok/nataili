@@ -2,6 +2,10 @@ from nataili.postprocessor import *
 
 
 class gfpgan(PostProcessor):
+
+    def set_filename_append(self):
+        self.filename_append = 'gfpgan'
+
     def __call__(self, input_image: PIL.Image = None, input_path: str = None, **kwargs):
         strength = kwargs.get("strength", 1.0)
         img, img_array = self.parse_image(input_image)
