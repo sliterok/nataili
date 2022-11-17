@@ -54,11 +54,9 @@ class HordeJob:
     def start_job(self):
         # Pop new request from the Horde
         self.available_models = self.model_manager.get_loaded_models_names()
-        if "LDSR" in self.available_models:
-            logger.warning("LDSR is an upscaler and doesn't belond in the model list. Ignoring")
-            self.available_models.remove("LDSR")
-        if "safety_checker" in self.available_models:
-            self.available_models.remove("safety_checker")
+        for util_model in ["LDSR","safety_checker","GFPGAN","RealESRGAN_x4plus"]:
+            if util_model in self.available_models:
+                self.available_models.remove(util_model)
         self.gen_dict = {
             "name": self.bd.worker_name,
             "max_pixels": self.bd.max_pixels,
