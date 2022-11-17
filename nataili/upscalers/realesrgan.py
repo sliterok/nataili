@@ -9,4 +9,4 @@ class realesrgan(PostProcessor):
         output, _ = self.model.enhance(img_array)
         output_array = np.array(output)
         output_image = PIL.Image.fromarray(output_array)
-        return(output_image)
+        return output_image

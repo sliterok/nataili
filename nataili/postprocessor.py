@@ -20,7 +20,6 @@ class PostProcessor:
     def set_filename_append(self):
         self.filename_append = "post_processed"
 
-
     def __call__(self, input_image: PIL.Image = None, input_path: str = None, **kwargs):
         img, img_array = self.parse_image(input_image, input_path)
         output_image = self.process(img, img_array, **kwargs)
@@ -30,8 +29,8 @@ class PostProcessor:
 
     # This should be overriden by each class
     def process(self, img, img_array, **kwargs):
-        '''Processes the image with the post-processor model'''
-        return(img)
+        """Processes the image with the post-processor model"""
+        return img
 
     def parse_image(self, input_image, input_path):
         img = None
