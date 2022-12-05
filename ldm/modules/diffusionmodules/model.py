@@ -864,7 +864,7 @@ class FirstStagePostProcessor(nn.Module):
 
         self.proj_norm = Normalize(in_channels,num_groups=in_channels//2)
         self.proj = nn.Conv2d(in_channels,n_channels,kernel_size=3,
-                            stride=1,padding=1)
+                            stride=1,padding=1,padding_mode='circular')
 
         blocks = []
         downs = []
